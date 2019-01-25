@@ -87,6 +87,9 @@
 		<Unit filename="/home/laurier/Dépôts Git/cpp-learning-opengl/src/main.cpp">
 			<Option target="cpp_learning_opengl"/>
 		</Unit>
+		<Unit filename="/home/laurier/Dépôts Git/cpp-learning-opengl/src/shader.cpp">
+			<Option target="cpp_learning_opengl"/>
+		</Unit>
 		<Unit filename="/home/laurier/Dépôts Git/cpp-learning-opengl/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\"/>
 		</Unit>

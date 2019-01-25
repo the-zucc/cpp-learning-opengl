@@ -5,6 +5,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
   "/home/laurier/Dépôts Git/cpp-learning-opengl/src/main.cpp" "/home/laurier/Dépôts Git/cpp-learning-opengl/cmake-build-debug/CMakeFiles/cpp_learning_opengl.dir/src/main.cpp.o"
+  "/home/laurier/Dépôts Git/cpp-learning-opengl/src/shader.cpp" "/home/laurier/Dépôts Git/cpp-learning-opengl/cmake-build-debug/CMakeFiles/cpp_learning_opengl.dir/src/shader.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/cpp_learning_opengl.dir/src/main.cpp.o"
+  "CMakeFiles/cpp_learning_opengl.dir/src/shader.cpp.o"
   "cpp_learning_opengl.pdb"
   "cpp_learning_opengl"
 )

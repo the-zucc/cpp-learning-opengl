@@ -1,15 +1,28 @@
 /**
- * following the tutorial here:
+ * To get the window open, I have been following the tutorial here:
  * https://www.khronos.org/opengl/wiki/Programming_OpenGL_in_Linux:_GLX_and_Xlib
+
+ * To draw the triangle and create the shaders, tutorials from
+ *      -> https://www.youtube.com/thechernoproject <-
+ * were used.
+ * here is the specific playlist -> https://www.youtube.com/playlist?list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2
  */
 #include<stdio.h>
 #include<stdlib.h>
+#include<time.h>
 
-#include<X11/X.h>
-#include<X11/Xlib.h>
-#include<GL/gl.h>
+//#include<X11/X.h>
+//#include<X11/Xlib.h>
+
+#include<GL/glew.h>
+
+//#include<GL/gl.h>
+
 #include<GL/glx.h>
-#include<GL/glu.h>
+
+//#include<GL/glu.h>
+
+#include "shader.cpp"
 
 
 Display                 *dpy;
@@ -23,7 +36,7 @@ GLXContext              glc;
 XWindowAttributes       gwa;
 XEvent                  xev;
 
-void DrawAQuad() {
+void DrawATriangle() {
     glClearColor(1.0, 1.0, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -35,15 +48,28 @@ void DrawAQuad() {
     glLoadIdentity();
     gluLookAt(0., 0., 10., 0., 0., 0., 0., 1., 0.);
 
-    glBegin(GL_QUADS);
-    glColor3f(1.f, 0.f, 0.f); glVertex3f(-1.f, -1.f, 0.f);
-    glColor3f(0.f, 1.f, 0.f); glVertex3f( 1.f, -1.f, 0.f);
-    glColor3f(0.f, 0.f, 0.f); glVertex3f( 1.f, 1.f, 0.f);
-    glColor3f(1.f, 0.f, 0.f); glVertex3f(-1.f, 1.f, 0.f);
-    glEnd();
+    float positions[] = {-0.5f,-0.5f,
+                         0.0f,0.5f,
+                         0.5,-0.5f};
+
+    unsigned int buffer;
+    //generate a buffer
+    glGenBuffers(1, &buffer);
+    //select buffer id to send to the GPU, for the next draw call.
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    //fill the buffer with the vertices
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float),positions, GL_STATIC_DRAW);
+    //set vertex attribute for position
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+    //enable "position" vertex attribute
+    glEnableVertexAttribArray(0);
+    //draw selected buffer
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
 }
 
 int main(int argc, char* argv[]) {
+
     dpy = XOpenDisplay(NULL);
 
     if(dpy == NULL) {
@@ -75,12 +101,40 @@ int main(int argc, char* argv[]) {
     XMapWindow(dpy, win);
 
     //change the string in the title bar
-    XStoreName(dpy, win, "VERY SIMPLE APPLICATION");
+    XStoreName(dpy, win, "My First OpenGL Window");
 
+    //create the rendering context
     glc = glXCreateContext(dpy, vi, NULL, GL_TRUE);
+
+    //set the rendering context to current
     glXMakeCurrent(dpy, win, glc);
 
+    //initiate GLEW
+    glewInit();
+
     glEnable(GL_DEPTH_TEST);
+
+    std::string vertexShader =
+            "#version 330 core\n"
+            "\n"
+            "layout(location = 0) in vec4 position;"
+            "void main()\n"
+            "{"
+            "gl_Position = position;\n"
+            "}"
+            "";
+    std::string fragmentShader =
+            "#version 330 core\n"
+            "\n"
+            "layout(location = 0) out vec4 color;"
+            "void main()\n"
+            "{\n"
+            "color = vec4(1.0, 0.0, 0.0, 1.0);\n"
+            "}\n"
+            "";
+    unsigned int shader = createShader(vertexShader, fragmentShader);
+
+    glUseProgram(shader);
 
     while(1) {
         XNextEvent(dpy, &xev);
@@ -88,11 +142,12 @@ int main(int argc, char* argv[]) {
         if(xev.type == Expose) {
             XGetWindowAttributes(dpy, win, &gwa);
             glViewport(0, 0, gwa.width, gwa.height);
-            DrawAQuad();
+            DrawATriangle();
             glXSwapBuffers(dpy, win);
         }
 
         else if(xev.type == KeyPress) {
+            glDeleteProgram(shader);
             glXMakeCurrent(dpy, None, NULL);
             glXDestroyContext(dpy, glc);
             XDestroyWindow(dpy, win);
@@ -100,6 +155,4 @@ int main(int argc, char* argv[]) {
             exit(0);
         }
     }
-    return 0;
 }
-

@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/laurier/Dépôts Git/cpp-learning-opengl/src/main.cpp
+stdio.h
+-
+stdlib.h
+-
+time.h
+-
+GL/glew.h
+-
+GL/glx.h
+-
+shader.cpp
+/home/laurier/Dépôts Git/cpp-learning-opengl/src/shader.cpp
+
+/home/laurier/Dépôts Git/cpp-learning-opengl/src/shader.cpp
+iostream
+-
+GL/glew.h
+-
+
