@@ -4,6 +4,36 @@
 #pragma once
 #include <iostream>
 #include <GL/glew.h>
+#include <fstream>
+
+
+static void parseShader(const std::string& filepath, std::string& vertexShader, std::string& fragmentShader){
+
+    std::ifstream stream(filepath);
+    std::string line;
+
+    std::string* currentShader= nullptr;
+
+    while(getline(stream, line)){
+        if(line.find("#shader") != std::string::npos){
+            if(line.find("vertex") != std::string::npos){
+                currentShader = &vertexShader;
+            }
+            else if(line.find("fragment") != std::string::npos){
+                currentShader = &fragmentShader;
+            }
+        }
+        else{
+            if(currentShader == nullptr){
+                std::cout << "Error. line '" << line << "' was in no shader";
+            }
+            else{
+
+                (*currentShader)= (*currentShader)+line+"\n";
+            }
+        }
+    }
+}
 
 static unsigned int compileShader(unsigned int type, const std::string& source){
     unsigned int id = glCreateShader(type);//GL_VERTEX_SHADER ?

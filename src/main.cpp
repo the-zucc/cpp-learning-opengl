@@ -25,18 +25,19 @@
 #include "shader.cpp"
 
 
-Display                 *dpy;
-Window                  root;
-GLint                   att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
-XVisualInfo             *vi;
-Colormap                cmap;
-XSetWindowAttributes    swa;
-Window                  win;
-GLXContext              glc;
-XWindowAttributes       gwa;
-XEvent                  xev;
+Display *dpy;
+Window root;
+GLint att[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None};
+XVisualInfo *vi;
+Colormap cmap;
+XSetWindowAttributes swa;
+Window win;
+GLXContext glc;
+XWindowAttributes gwa;
+XEvent xev;
 
-void DrawATriangle() {
+
+void DrawASquare() {
     glClearColor(1.0, 1.0, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -48,31 +49,46 @@ void DrawATriangle() {
     glLoadIdentity();
     gluLookAt(0., 0., 10., 0., 0., 0., 0., 1., 0.);
 
-    float positions[] = {-0.5f,-0.5f,
-                         0.0f,0.5f,
-                         0.5,-0.5f};
+    float positions[] = {-0.5f, -0.5f,
+                         0.5f, -0.5f,
+                         0.5, 0.5f,
+                         -0.5f, 0.5f};
 
-    unsigned int buffer;
+    unsigned int positionBufferObject;
     //generate a buffer
-    glGenBuffers(1, &buffer);
+    glGenBuffers(1, &positionBufferObject);
     //select buffer id to send to the GPU, for the next draw call.
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, positionBufferObject);
+
     //fill the buffer with the vertices
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float),positions, GL_STATIC_DRAW);
+    //glBufferData(GL_ARRAY_BUFFER, 6 * 2 * sizeof(float), positions, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(float), positions, GL_STATIC_DRAW);
     //set vertex attribute for position
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
     //enable "position" vertex attribute
     glEnableVertexAttribArray(0);
+
+    unsigned int indices[] = {0,1,2,//first triangle
+                     2,3,0};//second triangle
+
+    unsigned int indexBufferObject;
+    //generate a buffer
+    glGenBuffers(1, &indexBufferObject);
+    //select buffer id to send to the GPU, for the next draw call.
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferObject);
+    //fill the buffer with the vertices
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+    //set vertex attribute for position
+
     //draw selected buffer
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
 }
 
-int main(int argc, char* argv[]) {
-
+void openWindow() {
     dpy = XOpenDisplay(NULL);
 
-    if(dpy == NULL) {
+    if (dpy == NULL) {
         printf("\n\tcannot connect to X server\n\n");
         exit(0);
     }
@@ -81,12 +97,11 @@ int main(int argc, char* argv[]) {
 
     vi = glXChooseVisual(dpy, 0, att);
 
-    if(vi == NULL) {
+    if (vi == NULL) {
         printf("\n\tno appropriate visual found\n\n");
         exit(0);
-    }
-    else {
-        printf("\n\tvisual %p selected\n", (void *)vi->visualid); /* %p creates hexadecimal output like in glxinfo */
+    } else {
+        printf("\n\tvisual %p selected\n", (void *) vi->visualid); /* %p creates hexadecimal output like in glxinfo */
     }
 
     cmap = XCreateColormap(dpy, root, vi->visual, AllocNone);
@@ -95,58 +110,54 @@ int main(int argc, char* argv[]) {
     swa.event_mask = ExposureMask | KeyPressMask;
 
     //create window
-    win = XCreateWindow(dpy, root, 0, 0, 1920, 1080, 0, vi->depth, InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
+    win = XCreateWindow(dpy, root, 0, 0, 1920, 1080, 0, vi->depth, InputOutput, vi->visual, CWColormap | CWEventMask,
+                        &swa);
 
     //make the window appear
     XMapWindow(dpy, win);
 
     //change the string in the title bar
     XStoreName(dpy, win, "My First OpenGL Window");
+}
+
+void createRenderingContext() {
 
     //create the rendering context
     glc = glXCreateContext(dpy, vi, NULL, GL_TRUE);
 
     //set the rendering context to current
     glXMakeCurrent(dpy, win, glc);
+}
 
-    //initiate GLEW
+
+int main(int argc, char *argv[]) {
+    std::string vertexShader = "";
+    std::string fragmentShader = "";
+    parseShader("../res/shader/basic.shader", vertexShader, fragmentShader);
+    std::cout << vertexShader << std::endl;
+    std::cout << fragmentShader << std::endl;
+
+    openWindow();
+
+    createRenderingContext();
+
     glewInit();
 
     glEnable(GL_DEPTH_TEST);
 
-    std::string vertexShader =
-            "#version 330 core\n"
-            "\n"
-            "layout(location = 0) in vec4 position;"
-            "void main()\n"
-            "{"
-            "gl_Position = position;\n"
-            "}"
-            "";
-    std::string fragmentShader =
-            "#version 330 core\n"
-            "\n"
-            "layout(location = 0) out vec4 color;"
-            "void main()\n"
-            "{\n"
-            "color = vec4(1.0, 0.0, 0.0, 1.0);\n"
-            "}\n"
-            "";
     unsigned int shader = createShader(vertexShader, fragmentShader);
 
     glUseProgram(shader);
 
-    while(1) {
+    while (1) {
         XNextEvent(dpy, &xev);
 
-        if(xev.type == Expose) {
+        if (xev.type == Expose) {
             XGetWindowAttributes(dpy, win, &gwa);
             glViewport(0, 0, gwa.width, gwa.height);
-            DrawATriangle();
+            DrawASquare();
             glXSwapBuffers(dpy, win);
-        }
-
-        else if(xev.type == KeyPress) {
+        } else if (xev.type == KeyPress) {
             glDeleteProgram(shader);
             glXMakeCurrent(dpy, None, NULL);
             glXDestroyContext(dpy, glc);
