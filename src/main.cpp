@@ -147,16 +147,31 @@ int main(int argc, char *argv[]) {
 
     unsigned int shader = createShader(vertexShader, fragmentShader);
 
+    int colorLocation = glGetUniformLocation(shader, "u_color");
+
     glUseProgram(shader);
+    float color = 0.0f;
+    float increment = 0.05f;
 
     while (1) {
         XNextEvent(dpy, &xev);
 
         if (xev.type == Expose) {
+            if(color<0)
+                increment=-increment;
+            else if(color>1)
+                increment=-increment;
+            color+=increment;
+
+            glUniform4f(colorLocation, color, -color, color, 1.0f);
             XGetWindowAttributes(dpy, win, &gwa);
             glViewport(0, 0, gwa.width, gwa.height);
             DrawASquare();
             glXSwapBuffers(dpy, win);
+
+            XEvent expose = {Expose};
+            expose.xexpose.window = win;
+            XSendEvent(dpy,win,false,ExposureMask, &expose);
         } else if (xev.type == KeyPress) {
             glDeleteProgram(shader);
             glXMakeCurrent(dpy, None, NULL);
